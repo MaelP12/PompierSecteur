@@ -63,6 +63,37 @@ export function distanceToBounds(p: LatLng, [[s, w], [n, e]]: [LatLng, LatLng]):
   return haversine(p, [lat, lng])
 }
 
+/** Point décalé de `dx` m vers l'est et `dy` m vers le nord. */
+export function offsetMeters(p: LatLng, dx: number, dy: number): LatLng {
+  return [p[0] + dy / (R * RAD), p[1] + dx / (Math.cos(p[0] * RAD) * R * RAD)]
+}
+
+export interface HintCircle {
+  center: LatLng
+  radius: number
+}
+
+/**
+ * Cercles d'indice emboîtés, du plus grand au plus petit, contenant tous un même point
+ * de la voie. Les centres sont décalés dans une même direction aléatoire, proportionnellement
+ * au rayon : chaque cercle est inclus dans le précédent (|c1 − c2| = f·(r1 − r2) ≤ r1 − r2).
+ */
+export function hintCircles(
+  lines: LatLng[][],
+  radii: number[],
+  offset: number,
+  rand: () => number = Math.random,
+): HintCircle[] {
+  const pts = lines.flat()
+  const anchor = pts[Math.floor(rand() * pts.length)]
+  const angle = rand() * 2 * Math.PI
+  const f = offset * (0.5 + 0.5 * rand())
+  return radii.map((radius) => ({
+    center: offsetMeters(anchor, Math.cos(angle) * f * radius, Math.sin(angle) * f * radius),
+    radius,
+  }))
+}
+
 export function formatDistance(m: number): string {
   if (m < 1000) return `${Math.round(m)} m`
   return `${(m / 1000).toFixed(m < 10000 ? 2 : 1).replace('.', ',')} km`

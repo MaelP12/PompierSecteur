@@ -1,4 +1,4 @@
-import { SCORING } from '../config'
+import { HINTS, SCORING } from '../config'
 
 /** Points obtenus pour une distance (m) au point le plus proche de la voie. */
 export function pointsFor(distance: number, cfg = SCORING): number {
@@ -8,6 +8,11 @@ export function pointsFor(distance: number, cfg = SCORING): number {
   const t = (distance - full) / (zero - full) // 0 → 1
   const k = cfg.curve === 'ease' ? (1 + Math.cos(Math.PI * t)) / 2 : 1 - t
   return Math.round(maxPoints * k)
+}
+
+/** Points après déduction des indices utilisés (jamais négatifs). */
+export function withHintPenalty(points: number, hints: number, penalty = HINTS.penaltyPoints): number {
+  return Math.max(0, points - hints * penalty)
 }
 
 export function isSuccess(points: number): boolean {

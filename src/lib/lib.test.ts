@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Street } from '../types'
-import { formatDistance, haversine, nearestOnLines } from './geo'
+import { formatDistance, haversine, hintCircles, nearestOnLines } from './geo'
 import { pickGame, pickReview } from './questions'
-import { pointsFor } from './scoring'
+import { pointsFor, withHintPenalty } from './scoring'
 import type { StreetStat } from './stats'
 import { matches, normalize } from './text'
 
@@ -97,5 +97,35 @@ describe('tirage des questions', () => {
     const ids = pickReview(pool, 10, stats, now).map((s) => s.id).sort()
     expect(ids).toEqual(['a', 'b', 'd'])
     expect(pickReview(pool, 1, stats, now).map((s) => s.id)).toEqual(['b'])
+  })
+})
+
+describe('indices', () => {
+  const lines: [number, number][][] = [
+    [
+      [49.04, 2.06],
+      [49.041, 2.065],
+      [49.043, 2.07],
+    ],
+  ]
+
+  it('chaque cercle contient la voie et est inclus dans le précédent', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      let x = seed
+      const rand = () => ((x = (x * 16807) % 2147483647) / 2147483647)
+      const circles = hintCircles(lines, [1000, 400, 150], 0.6, rand)
+      circles.forEach((c, i) => {
+        expect(nearestOnLines(c.center, lines).distance).toBeLessThan(c.radius)
+        if (i > 0) {
+          const prev = circles[i - 1]
+          expect(haversine(prev.center, c.center) + c.radius).toBeLessThanOrEqual(prev.radius + 0.5)
+        }
+      })
+    }
+  })
+
+  it('retire la pénalité sans descendre sous 0', () => {
+    expect(withHintPenalty(90, 2, 15)).toBe(60)
+    expect(withHintPenalty(20, 3, 15)).toBe(0)
   })
 })

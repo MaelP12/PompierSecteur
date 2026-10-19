@@ -50,5 +50,8 @@ export interface Answer {
   guess: LatLng
   nearest: LatLng
   distance: number
+  /** Points finaux, pénalité d'indices déduite. */
   points: number
+  /** Nombre d'indices utilisés. */
+  hints: number
 }

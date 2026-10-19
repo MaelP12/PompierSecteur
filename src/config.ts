@@ -22,6 +22,16 @@ export const SCORING = {
   successPoints: 70,
 }
 
+export const HINTS = {
+  /** Rayon (m) du cercle affiché à chaque indice : chaque clic réduit la zone. */
+  radiiM: [1000, 400, 150],
+  /** Points retirés par indice utilisé (le score ne descend pas sous 0). */
+  penaltyPoints: 15,
+  /** Décalage max du centre par rapport à la voie, en fraction du rayon
+   *  (0 = voie au centre ; < 1 pour qu'elle reste dans le cercle). */
+  offset: 0.6,
+}
+
 export const REVIEW = {
   /** Intervalles (jours) de la répétition espacée, par « boîte » (système de Leitner).
    *  Une erreur renvoie la voie en boîte 0 (à revoir tout de suite). */
