@@ -1,0 +1,172 @@
+# Configuration de la génération des données « Rues du secteur ».
+# Modifiez ce fichier puis relancez :  python scripts/build_data.py
+
+# ---------------------------------------------------------------------------
+# Périmètre
+# ---------------------------------------------------------------------------
+[[communes]]
+insee = "95127"
+nom = "Cergy"
+
+[[communes]]
+insee = "95500"
+nom = "Pontoise"
+
+[[communes]]
+insee = "95476"
+nom = "Osny"
+
+# ---------------------------------------------------------------------------
+# Sources de données
+# ---------------------------------------------------------------------------
+[sources]
+# Plusieurs serveurs Overpass : essayés dans l'ordre en cas d'échec.
+overpass_urls = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
+# Contour officiel des communes (API Découpage administratif). Repli : relation OSM.
+commune_contour_url = "https://geo.api.gouv.fr/communes/{insee}?format=geojson&geometry=contour"
+# Base Adresse Nationale, fichier du département (sert à compter les adresses par voie).
+ban_url = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-95.csv.gz"
+# Mettre à false pour ignorer la BAN (le critère « adresses » est alors retiré du score).
+use_ban = true
+
+# ---------------------------------------------------------------------------
+# Sélection et nettoyage des voies OSM
+# ---------------------------------------------------------------------------
+[filter]
+# Valeurs de highway=* retenues (la voie doit aussi avoir un tag name=*).
+highways = [
+  "motorway", "trunk", "primary", "secondary", "tertiary",
+  "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link",
+  "unclassified", "residential", "living_street", "pedestrian", "service",
+  "road", "track",
+]
+# Ajoutez "footway", "path", "cycleway" pour inclure les cheminements piétons nommés
+# (nombreux sur les dalles de Cergy-Préfecture).
+# Noms exclus (expressions régulières, insensibles à la casse).
+exclude_name_patterns = [
+  "^parking", "^autoroute", "^bretelle", "^accès ", "^sortie ", "^entrée ",
+]
+# Longueur minimale d'une voie (m) après fusion.
+min_length_m = 15
+# Un morceau de voie coupé par une limite communale n'est gardé dans la commune
+# que s'il mesure au moins cette longueur ou s'il a des adresses BAN dans cette commune.
+min_clipped_length_m = 60
+# Tolérance de simplification de la géométrie (m). 0 = pas de simplification.
+simplify_tolerance_m = 1.5
+# Nombre de décimales des coordonnées (5 ≈ 1 m).
+coord_precision = 5
+
+# ---------------------------------------------------------------------------
+# Quartiers (approximatif) : chaque voie est rattachée au lieu OSM place=* le plus
+# proche de son centre, dans la même commune.
+# ---------------------------------------------------------------------------
+[quartiers]
+enabled = true
+place_types = ["suburb", "quarter", "neighbourhood"]
+max_distance_m = 1500
+
+# ---------------------------------------------------------------------------
+# Score de notoriété (0 à 1) = somme pondérée des critères ci-dessous.
+# Les poids sont renormalisés automatiquement (le critère adresses est retiré si la BAN
+# n'est pas disponible).
+# ---------------------------------------------------------------------------
+[notoriety.weights]
+highway = 0.35
+length = 0.25
+name_type = 0.20
+addresses = 0.20
+
+# Valeur de chaque classe OSM. Pour une voie à plusieurs classes, on prend la
+# moyenne pondérée par la longueur, ou le max (voir highway_mode).
+[notoriety.highway]
+motorway = 1.0
+trunk = 1.0
+primary = 1.0
+secondary = 0.85
+tertiary = 0.7
+motorway_link = 0.6
+trunk_link = 0.6
+primary_link = 0.6
+secondary_link = 0.5
+tertiary_link = 0.45
+unclassified = 0.45
+road = 0.4
+residential = 0.35
+pedestrian = 0.25
+living_street = 0.15
+service = 0.1
+track = 0.05
+footway = 0.05
+path = 0.05
+cycleway = 0.05
+default = 0.3
+
+[notoriety.options]
+# "mean" (moyenne pondérée par la longueur) ou "max".
+highway_mode = "mean"
+# Longueurs (m) correspondant à 0 et 1 sur une échelle logarithmique.
+length_min_m = 50
+length_max_m = 3000
+# Nombre d'adresses correspondant à 1 (échelle logarithmique).
+addresses_max = 150
+
+# Valeur du type de voie, déduit du premier mot du nom. Clés sans accents, minuscules.
+[notoriety.name_type]
+boulevard = 1.0
+avenue = 0.9
+route = 0.85
+chaussee = 0.8
+quai = 0.75
+cours = 0.65
+place = 0.6
+rond-point = 0.6
+pont = 0.6
+esplanade = 0.55
+parvis = 0.55
+rue = 0.55
+mail = 0.5
+promenade = 0.45
+chemin = 0.4
+voie = 0.4
+carrefour = 0.4
+montee = 0.35
+rampe = 0.35
+square = 0.3
+port = 0.3
+allee = 0.25
+galerie = 0.2
+passage = 0.2
+cour = 0.2
+ruelle = 0.15
+venelle = 0.15
+traverse = 0.15
+hameau = 0.15
+clos = 0.15
+villa = 0.15
+residence = 0.15
+cite = 0.15
+impasse = 0.1
+sentier = 0.1
+sente = 0.1
+default = 0.35
+
+# ---------------------------------------------------------------------------
+# Niveaux : répartition par quantiles du score de notoriété.
+# ---------------------------------------------------------------------------
+[levels]
+# "commune" : quantiles calculés dans chaque commune (chaque commune garde ses
+# 20 % de voies faciles), ou "global" : sur l'ensemble du secteur.
+scope = "commune"
+easy_share = 0.20     # Facile : les ~20 % de voies les plus connues
+medium_share = 0.40   # Moyen : les ~40 % suivantes ; Difficile : le reste
+
+# Forçages manuels du niveau (1 = Facile, 2 = Moyen, 3 = Difficile).
+# Exemple :
+# [[overrides]]
+# commune = "Cergy"
+# name = "Boulevard de l'Hautil"
+# level = 1
