@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { loadDataset } from './lib/data'
 import { filterStreets, pickGame, pickReview } from './lib/questions'
 import { loadSettings, saveSettings } from './lib/settings'
@@ -96,6 +97,7 @@ function Main({ data }: { data: Dataset }) {
 
   return (
     <>
+      <Analytics />
       {screen.name === 'home' && (
         <>
           <Home
