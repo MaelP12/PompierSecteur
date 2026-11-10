@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { loadDataset } from './lib/data'
 import { filterStreets, pickGame, pickReview } from './lib/questions'
 import { loadSettings, saveSettings } from './lib/settings'
@@ -33,11 +34,17 @@ export default function App() {
         <p className="muted">
           Générez les données avec <code>python scripts/build_data.py</code> (voir README).
         </p>
+        <Analytics />
       </div>
     )
   }
-  if (!data) return <div className="page center muted">Chargement des voies…</div>
-  return <Main data={data} />
+  if (!data) return <div className="page center muted">Chargement des voies…<Analytics /></div>
+  return (
+    <>
+      <Main data={data} />
+      <Analytics />
+    </>
+  )
 }
 
 function Main({ data }: { data: Dataset }) {
