@@ -51,6 +51,40 @@ Les téléchargements sont mis en cache dans `scripts/.cache/`. Options :
 
 `npm run data:demo` régénère le jeu de démonstration (sans réseau).
 
+### Vérifier les voies avec Google Maps
+
+`npm run verify:google` géocode chaque voie avec l'API Geocoding de Google et ajoute une colonne `google`
+à `verification/voies_verification.csv` (confirmée / nom différent / autre commune / absente, avec la distance au tracé).
+Il faut une clé Google Cloud avec la **Geocoding API** activée, dans la variable `GOOGLE_MAPS_API_KEY` :
+
+```powershell
+$env:GOOGLE_MAPS_API_KEY = "votre-clé"
+npm run verify:google -- --limit 10    # essai sur 10 voies
+npm run verify:google                  # toutes les voies (~965 requêtes)
+```
+
+Les réponses sont gardées dans `verification/google_cache.json` (non versionné) pour ne pas payer deux fois ;
+`--refresh` réinterroge Google. Les conditions de Google interdisent de réutiliser ces positions dans l'app :
+elles servent uniquement à repérer les erreurs. Supprimez le cache une fois la vérification terminée.
+
+### Corriger les voies d'après Google
+
+```bash
+npm run google:corrections               # propose : écrit verification/corrections_google.csv
+npm run google:corrections -- --apply    # applique ce fichier à public/data/streets.geojson
+```
+
+La première commande lit **uniquement** les réponses Google (`google_cache.json`) et classe chaque voie :
+`supprimer` (Google ne connaît ce nom que dans une autre commune, ou rien d'approchant près de la voie),
+`renommer` (Google donne à moins de 250 m un nom équivalent écrit autrement), `verifier` (cas douteux,
+places et ronds-points, que Google indexe mal : rien n'est modifié). Relisez le CSV, changez au besoin la
+colonne `action` (`supprimer`, `renommer`, `garder`) ou `nouveau_nom`, puis appliquez. Les voies renommées
+vers un nom déjà présent dans la commune sont fusionnées avec celle-ci.
+
+`build_data.py` ne connaît pas ces corrections : après chaque `npm run data`, relancez
+`npm run google:corrections -- --apply` (le CSV suffit, Google n'est pas réinterrogé).
+Une voie renommée change d'identifiant : ses statistiques de jeu repartent de zéro.
+
 ### Régler la difficulté : `scripts/config.toml`
 
 Score de notoriété (0 à 1) = somme pondérée de 4 critères :

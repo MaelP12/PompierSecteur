@@ -9,7 +9,9 @@
     "preview": "vite preview --host",
     "test": "vitest run",
     "data": "python3 scripts/build_data.py",
-    "data:demo": "python3 scripts/make_demo_data.py"
+    "data:demo": "python3 scripts/make_demo_data.py",
+    "verify:google": "node scripts/verify_google.mjs",
+    "google:corrections": "node scripts/google_corrections.mjs"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-leaflet": "^0.1.4",
