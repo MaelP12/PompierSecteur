@@ -40,12 +40,14 @@ export default function App() {
       </>
     )
   }
-  if (!data) return (
-    <>
-      <div className="page center muted">Chargement des voies…</div>
-      <Analytics />
-    </>
-  )
+  if (!data) {
+    return (
+      <>
+        <div className="page center muted">Chargement des voies…</div>
+        <Analytics />
+      </>
+    )
+  }
   return (
     <>
       <Main data={data} />
